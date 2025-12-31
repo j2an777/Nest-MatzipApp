@@ -128,5 +128,7 @@ export class PostService {
         '피드를 수정하는 도중 에러가 발생했습니다.',
       );
     }
+
+    return post;
   }
 }
