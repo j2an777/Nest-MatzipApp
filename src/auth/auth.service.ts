@@ -41,4 +41,15 @@ export class AuthService {
       );
     }
   }
+
+  async signin(authDto: AuthDto) {
+    const { email, password } = authDto;
+    const user = await this.userRepository.findOneBy({ email });
+
+    if (!user || !(await bcrypt.compare(password, user.password))) {
+      throw new UnauthorizedException(
+        '이메일 또는 비밀번호가 일치하지 않습니다.',
+      );
+    }
+  }
 }
