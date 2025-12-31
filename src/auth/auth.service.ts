@@ -5,6 +5,8 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { ConfigService } from '@nestjs/config';
+import { JwtService } from '@nestjs/jwt';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
 
@@ -16,6 +18,8 @@ export class AuthService {
   constructor(
     @InjectRepository(User)
     private userRepository: Repository<User>,
+    private jwtService: JwtService,
+    private ConfigService: ConfigService,
   ) {}
 
   async signup(authDto: AuthDto) {
@@ -42,6 +46,27 @@ export class AuthService {
     }
   }
 
+  private async getTokens({ email }: { email: string }) {
+    const [accessToken, refreshToken] = await Promise.all([
+      this.jwtService.signAsync(
+        { email },
+        {
+          secret: this.ConfigService.get('JWT_SECRET'),
+          expiresIn: this.ConfigService.get('JWT_ACCESS_TOKEN_EXPIRATION'),
+        },
+      ),
+      this.jwtService.signAsync(
+        { email },
+        {
+          secret: this.ConfigService.get('JWT_SECRET'),
+          expiresIn: this.ConfigService.get('JWT_REFRESH_TOKEN_EXPIRATION'),
+        },
+      ),
+    ]);
+
+    return { accessToken, refreshToken };
+  }
+
   async signin(authDto: AuthDto) {
     const { email, password } = authDto;
     const user = await this.userRepository.findOneBy({ email });
@@ -51,5 +76,9 @@ export class AuthService {
         '이메일 또는 비밀번호가 일치하지 않습니다.',
       );
     }
+
+    const { accessToken, refreshToken } = await this.getTokens({ email });
+
+    return { accessToken, refreshToken };
   }
 }
