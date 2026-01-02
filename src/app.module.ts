@@ -4,6 +4,7 @@ import { Module } from '@nestjs/common';
 
 import { PostModule } from './post/post.module';
 import { AuthModule } from './auth/auth.module';
+import { ImageModule } from './image/image.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { AuthModule } from './auth/auth.module';
     }),
     PostModule,
     AuthModule,
+    ImageModule,
   ],
   providers: [ConfigService],
 })
