@@ -6,6 +6,8 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
+import { User } from '@/auth/user.entity';
+
 import { CreatePostDto } from './dto/create-post.dto';
 import { Post } from './post.entity';
 
@@ -18,10 +20,11 @@ export class PostService {
     private postRepository: Repository<Post>,
   ) {}
 
-  async getAllMarkers() {
+  async getAllMarkers(user: User) {
     try {
       const markers = await this.postRepository
         .createQueryBuilder('post')
+        .where('post.userId = :userId', { userId: user.id })
         .select([
           'post.id',
           'post.latitude',
@@ -40,23 +43,25 @@ export class PostService {
     }
   }
 
-  async getPosts(page: number) {
+  async getPosts(page: number, user: User) {
     const perPage = 10;
     const offSet = (page - 1) * perPage;
 
     return this.postRepository
       .createQueryBuilder('post')
+      .where('post.userId = :userId', { userId: user.id })
       .orderBy('post.date', 'DESC')
       .take(perPage)
       .skip(offSet)
       .getMany();
   }
 
-  async getPostById(id: number) {
+  async getPostById(id: number, user: User) {
     try {
       const foundPost = await this.postRepository
         .createQueryBuilder('post')
-        .where('post.id = :id', { id })
+        .where('post.userId = :userId', { userId: user.id })
+        .andWhere('post.id = :id', { id })
         .getOne();
 
       if (!foundPost) {
@@ -72,7 +77,7 @@ export class PostService {
     }
   }
 
-  async createPost(createPostDto: CreatePostDto) {
+  async createPost(createPostDto: CreatePostDto, user: User) {
     const {
       latitude,
       longitude,
@@ -94,6 +99,7 @@ export class PostService {
       description,
       date,
       score,
+      user,
     });
 
     try {
@@ -105,16 +111,19 @@ export class PostService {
       );
     }
 
-    return post;
+    const { user: _, ...postWithoutUser } = post;
+
+    return postWithoutUser;
   }
 
-  async deletePost(id: number) {
+  async deletePost(id: number, user: User) {
     try {
       const result = await this.postRepository
         .createQueryBuilder('post')
+        .where('post.userId = :userId', { userId: user.id })
         .delete()
         .from(Post)
-        .where('id = :id', { id })
+        .andWhere('id = :id', { id })
         .execute();
 
       if (result.affected === 0) {
@@ -130,8 +139,8 @@ export class PostService {
     }
   }
 
-  async updatePost(id: number, updatePostDto: UpdatePostDto) {
-    const post = await this.getPostById(id);
+  async updatePost(id: number, updatePostDto: UpdatePostDto, user: User) {
+    const post = await this.getPostById(id, user);
     const { title, description, color, date, score, imageUris } = updatePostDto;
 
     post.title = title;
