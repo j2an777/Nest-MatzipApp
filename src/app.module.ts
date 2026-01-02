@@ -1,10 +1,12 @@
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ServeStaticModule } from '@nestjs/serve-static';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Module } from '@nestjs/common';
+import { join } from 'path';
 
+import { ImageModule } from './image/image.module';
 import { PostModule } from './post/post.module';
 import { AuthModule } from './auth/auth.module';
-import { ImageModule } from './image/image.module';
 
 @Module({
   imports: [
@@ -18,6 +20,9 @@ import { ImageModule } from './image/image.module';
       database: 'matzip-server',
       entities: [__dirname + '/**/*.entity.{js,ts}'],
       synchronize: true,
+    }),
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'uploads'),
     }),
     PostModule,
     AuthModule,
