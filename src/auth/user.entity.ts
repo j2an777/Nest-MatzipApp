@@ -4,12 +4,14 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  OneToMany,
   PrimaryGeneratedColumn,
   Unique,
   UpdateDateColumn,
 } from 'typeorm';
 
-import { MarkerColor } from 'src/post/marker-color.enum';
+import { MarkerColor } from '@/post/marker-color.enum';
+import { Post } from '@/post/post.entity';
 
 @Entity()
 @Unique(['email'])
@@ -61,4 +63,7 @@ export class User extends BaseEntity {
 
   @Column({ nullable: true })
   hashedRefreshToken?: string;
+
+  @OneToMany(() => Post, (post) => post.user, { eager: false })
+  post: Post[];
 }
