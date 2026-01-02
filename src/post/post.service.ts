@@ -6,6 +6,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
+import { Image } from '@/image/image.entity';
 import { User } from '@/auth/user.entity';
 
 import { CreatePostDto } from './dto/create-post.dto';
@@ -18,6 +19,8 @@ export class PostService {
   constructor(
     @InjectRepository(Post)
     private postRepository: Repository<Post>,
+    @InjectRepository(Image)
+    private imageRepository: Repository<Image>,
   ) {}
 
   async getAllMarkers(user: User) {
@@ -43,23 +46,36 @@ export class PostService {
     }
   }
 
+  private getPostsWithOrderImages(posts: Post[]) {
+    return posts.map((post) => {
+      const { images, ...rest } = post;
+      const newImages = [...images].sort((a, b) => a.id - b.id);
+
+      return { ...rest, newImages };
+    });
+  }
+
   async getPosts(page: number, user: User) {
     const perPage = 10;
     const offSet = (page - 1) * perPage;
 
-    return this.postRepository
+    const posts = await this.postRepository
       .createQueryBuilder('post')
+      .leftJoinAndSelect('post.images', 'image')
       .where('post.userId = :userId', { userId: user.id })
       .orderBy('post.date', 'DESC')
       .take(perPage)
       .skip(offSet)
       .getMany();
+
+    return this.getPostsWithOrderImages(posts);
   }
 
   async getPostById(id: number, user: User) {
     try {
       const foundPost = await this.postRepository
         .createQueryBuilder('post')
+        .leftJoinAndSelect('post.images', 'image')
         .where('post.userId = :userId', { userId: user.id })
         .andWhere('post.id = :id', { id })
         .getOne();
@@ -102,7 +118,11 @@ export class PostService {
       user,
     });
 
+    const images = imageUris.map((uri) => this.imageRepository.create(uri));
+    post.images = images;
+
     try {
+      await this.postRepository.save(images);
       await this.postRepository.save(post);
     } catch (error) {
       console.log(error);
@@ -149,9 +169,11 @@ export class PostService {
     post.date = date;
     post.score = score;
 
-    // image module
+    const images = imageUris.map((uri) => this.imageRepository.create(uri));
+    post.images = images;
 
     try {
+      await this.postRepository.save(images);
       await this.postRepository.save(post);
     } catch (error) {
       console.log(error);
