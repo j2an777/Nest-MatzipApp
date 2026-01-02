@@ -12,7 +12,7 @@ import { GetUser } from '@common/decorators/get-user.decorator';
 
 import { AuthService } from './auth.service';
 import { AuthDto } from './dto/auth.dto';
-import { User } from './auth.entity';
+import { User } from './user.entity';
 
 @Controller('auth')
 export class AuthController {

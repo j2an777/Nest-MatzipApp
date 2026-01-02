@@ -12,7 +12,7 @@ import { Repository } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
 
 import { AuthDto } from './dto/auth.dto';
-import { User } from './auth.entity';
+import { User } from './user.entity';
 
 @Injectable()
 export class AuthService {
