@@ -51,7 +51,7 @@ export class PostService {
       const { images, ...rest } = post;
       const newImages = [...images].sort((a, b) => a.id - b.id);
 
-      return { ...rest, newImages };
+      return { ...rest, images: newImages };
     });
   }
 
