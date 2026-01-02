@@ -7,6 +7,7 @@ import { join } from 'path';
 import { ImageModule } from './image/image.module';
 import { PostModule } from './post/post.module';
 import { AuthModule } from './auth/auth.module';
+import { FavoriteModule } from './favorite/favorite.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { AuthModule } from './auth/auth.module';
     PostModule,
     AuthModule,
     ImageModule,
+    FavoriteModule,
   ],
   providers: [ConfigService],
 })
