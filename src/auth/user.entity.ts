@@ -11,6 +11,7 @@ import {
 } from 'typeorm';
 
 import { MarkerColor } from '@/post/marker-color.enum';
+import { Favorite } from '@/favorite/favorite.entity';
 import { Post } from '@/post/post.entity';
 
 @Entity()
@@ -66,4 +67,7 @@ export class User extends BaseEntity {
 
   @OneToMany(() => Post, (post) => post.user, { eager: false })
   post: Post[];
+
+  @OneToMany(() => Favorite, (favorite) => favorite.user)
+  favorites: Favorite[];
 }

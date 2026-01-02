@@ -11,6 +11,7 @@ import {
 } from 'typeorm';
 
 import { ColumnNumericTransformer } from '@/@common/transformers/numeric.transformer';
+import { Favorite } from '@/favorite/favorite.entity';
 import { Image } from '@/image/image.entity';
 import { User } from '@/auth/user.entity';
 
@@ -69,4 +70,7 @@ export class Post extends BaseEntity {
 
   @OneToMany(() => Image, (image) => image.post)
   images: Image[];
+
+  @OneToMany(() => Favorite, (favorite) => favorite.post)
+  favorites: Favorite[];
 }
