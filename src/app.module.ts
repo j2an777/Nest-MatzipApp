@@ -4,10 +4,10 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Module } from '@nestjs/common';
 import { join } from 'path';
 
+import { FavoriteModule } from './favorite/favorite.module';
 import { ImageModule } from './image/image.module';
 import { PostModule } from './post/post.module';
 import { AuthModule } from './auth/auth.module';
-import { FavoriteModule } from './favorite/favorite.module';
 
 @Module({
   imports: [
