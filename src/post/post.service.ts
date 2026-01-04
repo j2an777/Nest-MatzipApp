@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Brackets, Repository } from 'typeorm';
 
 import { Image } from '@/image/image.entity';
 import { User } from '@/auth/user.entity';
@@ -22,6 +22,14 @@ export class PostService {
     @InjectRepository(Image)
     private imageRepository: Repository<Image>,
   ) {}
+
+  private async getPostsBaseQuery(userId: number) {
+    return this.postRepository
+      .createQueryBuilder('post')
+      .leftJoinAndSelect('post.images', 'image')
+      .where('post.userId = :userId', { userId })
+      .orderBy('post.date', 'DESC');
+  }
 
   async getAllMarkers(user: User) {
     try {
@@ -58,15 +66,8 @@ export class PostService {
   async getPosts(page: number, user: User) {
     const perPage = 10;
     const offSet = (page - 1) * perPage;
-
-    const posts = await this.postRepository
-      .createQueryBuilder('post')
-      .leftJoinAndSelect('post.images', 'image')
-      .where('post.userId = :userId', { userId: user.id })
-      .orderBy('post.date', 'DESC')
-      .take(perPage)
-      .skip(offSet)
-      .getMany();
+    const queryBuilder = await this.getPostsBaseQuery(user.id);
+    const posts = await queryBuilder.take(perPage).skip(offSet).getMany();
 
     return this.getPostsWithOrderImages(posts);
   }
@@ -192,5 +193,56 @@ export class PostService {
     }
 
     return post;
+  }
+
+  async getPostsByMonth(year: number, month: number, user: User) {
+    const posts = await this.postRepository
+      .createQueryBuilder('post')
+      .where('post.userId = :userId', { userId: user.id })
+      .andWhere('extract(year from post.date = :year', { year })
+      .andWhere('extract(month from post.date = :month', { month })
+      .select([
+        'post.id AS id',
+        'post.title AS title',
+        'post.address AS address',
+        'EXTRACT(DAY FROM post.date) AS date',
+      ])
+      .getRawMany();
+
+    // date를 키로 가진 배열에 해당하는 id, title, address를 매핑하여 저장하기 위함
+    const groupPostsByDate = posts.reduce((acc, post) => {
+      const { id, title, address, date } = post;
+
+      if (!acc[date]) acc[date] = [];
+
+      acc[date].push({ id, title, address });
+
+      return acc;
+    }, {});
+
+    return groupPostsByDate;
+  }
+
+  async searchMyPostsByTitleAndAddress(
+    query: string,
+    page: number,
+    user: User,
+  ) {
+    const perPage = 10;
+    const offSet = (page - 1) * perPage;
+    const queryBuilder = await this.getPostsBaseQuery(user.id);
+
+    const posts = await queryBuilder
+      .andWhere(
+        new Brackets((qb) => {
+          qb.where('post.title like :query', { query: `%${query}%` });
+          qb.orWhere('post.address like :query', { query: `%${query}%` });
+        }),
+      )
+      .skip(offSet)
+      .take(perPage)
+      .getMany();
+
+    return this.getPostsWithOrderImages(posts);
   }
 }
